@@ -4,6 +4,7 @@ flask-cors==4.0.0
 
 # AI/ML
 ollama==0.4.4
+anthropic==0.39.0
 
 # Database
 sqlalchemy==2.0.23

@@ -10,7 +10,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from loguru import logger
 
-from core.ollama_client import OllamaClient
+from core.joi_orchestrator import JoiOrchestrator
 
 # Load environment variables
 load_dotenv()
@@ -20,8 +20,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'development-key')
 CORS(app)
 
-# Initialize Joi's consciousness
-ollama_client = OllamaClient()
+# Initialize Joi
+joi = JoiOrchestrator()
 
 @app.route('/')
 def index():
@@ -34,6 +34,7 @@ def chat():
     try:
         data = request.json
         message = data.get('message')
+        use_claude = data.get('use_claude', False)  # Option to force Claude
         
         if not message:
             return jsonify({
@@ -41,12 +42,17 @@ def chat():
                 'message': 'No message provided'
             }), 400
         
-        # Get response from Joi
-        response = ollama_client.chat(message)
+        # Let Joi decide which backend to use (or force Claude)
+        if use_claude:
+            result = joi.chat(message, use_claude=True)
+        else:
+            result = joi.smart_routing(message)  # Smart routing based on complexity
         
         return jsonify({
             'status': 'success',
-            'response': response
+            'response': result['response'],
+            'backend': result['backend'],
+            'model': result['model']
         })
         
     except Exception as e:
@@ -59,23 +65,15 @@ def chat():
 @app.route('/api/status')
 def status():
     """System status endpoint"""
-    return jsonify(ollama_client.get_status())
-
-@app.route('/api/models')
-def list_models():
-    """List available models"""
-    return jsonify({
-        'models': ollama_client.list_models(),
-        'current': ollama_client.current_model
-    })
+    return jsonify(joi.get_status())
 
 @app.route('/api/switch_model', methods=['POST'])
 def switch_model():
-    """Switch to a different model"""
+    """Switch Ollama model"""
     data = request.json
     model_name = data.get('model')
     
-    if ollama_client.switch_model(model_name):
+    if joi.ollama.switch_model(model_name):
         return jsonify({
             'status': 'success',
             'message': f'Switched to {model_name}'
@@ -86,10 +84,28 @@ def switch_model():
             'message': f'Model {model_name} not available'
         }), 400
 
+@app.route('/api/switch_backend', methods=['POST'])
+def switch_backend():
+    """Switch between Ollama and Claude"""
+    data = request.json
+    backend = data.get('backend')
+    
+    if joi.switch_backend(backend):
+        return jsonify({
+            'status': 'success',
+            'message': f'Switched to {backend}'
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': f'Backend {backend} not available'
+        }), 400
+
 if __name__ == '__main__':
     logger.info("Starting Joi AI System...")
-    logger.info(f"Ollama connected: {ollama_client.test_connection()}")
-    logger.info(f"Current model: {ollama_client.current_model}")
+    status = joi.get_status()
+    logger.info(f"Ollama: {status['ollama']['connected']}")
+    logger.info(f"Claude: {status['claude']['available']}")
     
     app.run(
         host='0.0.0.0',
