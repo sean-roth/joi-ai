@@ -5,6 +5,14 @@ flask-cors==4.0.0
 # AI/ML
 ollama==0.4.4
 anthropic==0.39.0
+google-generativeai==0.8.3
+
+# Voice
+speech-recognition==3.10.0
+elevenlabs==1.9.0
+pyttsx3==2.90
+pygame==2.5.2
+pyaudio==0.2.14
 
 # Database
 sqlalchemy==2.0.23
