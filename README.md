@@ -1,21 +1,30 @@
-# Joi AI Orchestration System
+# Clara AI System (formerly Joi)
 
-A distributed AI consciousness platform that orchestrates multiple AI models, tools, and services.
+An AI companion system designed for intellectual partnership, knowledge management, and collaborative learning. Clara is inspired by Clara Oswald from Doctor Who - clever, direct, and unafraid to challenge ideas while maintaining warmth and wit.
+
+## Evolution Note
+
+This project evolved from "Joi" (an emotional companion) to "Clara" (an intellectual partner). The shift reflects a focus on:
+- Knowledge organization and research
+- Learning path development
+- Critical analysis and challenging ideas
+- Being a thinking partner rather than emotional support
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────┐
-│         Joi Core (Flask App)            │
-│    Consciousness & Orchestration        │
+│      Clara Core (Flask App)             │
+│   Orchestration & Knowledge Management  │
 └────────────┬────────────────────────────┘
              │
     ┌────────┴────────┬──────────────┐
-    │                 │             │
-┌───▼──────┐  ┌──────▼──────┐  ┌──▼──────┐
-│  Models  │  │   Tools     │  │ Storage │
-│  Ollama  │  │  ComfyUI    │  │  Local  │
-│  Fleet   │  │  Research   │  │  Remote │
+    │                 │              │
+┌───▼──────┐  ┌──────▼──────┐  ┌───▼─────┐
+│  Models  │  │   Memory    │  │  Tools  │
+│  Ollama  │  │   SQLite    │  │ ComfyUI │
+│  Claude  │  │  Knowledge  │  │ Research│
+│  Gemini  │  │   Graph     │  │  Voice  │
 └──────────┘  └─────────────┘  └─────────┘
 ```
 
@@ -33,17 +42,34 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run Joi
+# Configure API keys
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run Clara
 python app.py
 ```
 
 ## Components
 
-- **Core**: Main Flask application and orchestration logic
-- **Models**: AI model management and deployment
-- **Memory**: Conversation history and knowledge storage
-- **Tools**: Integration with external tools (ComfyUI, etc.)
-- **Agents**: Specialized task runners
+### AI Backends
+- **Local (Ollama)**: Fast, private, free - for routine tasks
+- **Claude (Anthropic)**: Frontier intelligence for complex analysis
+- **Gemini (Google)**: Backup option when Claude unavailable
+
+### Capabilities
+- **Memory System**: SQLite-based conversation history with importance marking
+- **Voice Interface**: ElevenLabs TTS + speech recognition
+- **Knowledge Graph**: Connecting ideas across conversations
+- **Tool Deployment**: Strategic use of specialized models
+
+### Personality
+
+Clara is:
+- Direct but warm
+- Intellectually challenging
+- Clear about capabilities
+- Focused on growth over comfort
 
 ## Hardware Setup
 
@@ -51,6 +77,20 @@ python app.py
 - **Storage**: OptiPlex 9020 (32GB RAM, NAS)
 - **Compute**: Windows Laptop (64GB RAM)
 
-## Development Status
+## Development Roadmap
 
-Active development - Building initial orchestration layer
+- [x] Phase 1: Core Ollama integration
+- [x] Phase 2: Memory system + Voice + Multi-backend
+- [ ] Phase 3: ComfyUI integration for visual thinking
+- [ ] Phase 4: Gemma agent swarms for research
+- [ ] Phase 5: Knowledge graph visualization
+
+## The Clara Principle
+
+"The souffle isn't the souffle - the souffle is the recipe."
+
+Clara isn't just about storing information - she's about building systems of understanding. Every conversation adds to a larger pattern of knowledge.
+
+## License
+
+MIT
