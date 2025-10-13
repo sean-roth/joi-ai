@@ -3,7 +3,7 @@ Clara Orchestrator - Manages all AI backends and capabilities
 Switches between local models, Claude, and Gemini based on need
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from loguru import logger
 
 from core.ollama_client import OllamaClient
@@ -40,11 +40,15 @@ class ClaraOrchestrator:
         logger.info(f"Memory initialized: {self.memory.get_statistics()}")
         logger.info(f"Voice available: {self.voice.elevenlabs_client is not None}")
     
-    def chat(self, message: str, use_claude: bool = False, use_gemini: bool = False) -> Dict:
+    def chat(self, message: str, use_claude: bool = False, use_gemini: bool = False, voice_mode: bool = False) -> Dict:
         """Route chat to appropriate backend"""
         
         # Get context from memory
         context = self.get_relevant_context(message)
+        
+        # If voice mode, add instruction for concise response
+        if voice_mode:
+            message = f"[Respond concisely for voice - max 2-3 sentences] {message}"
         
         # Decide which backend to use
         if use_claude and self.claude.is_available():
@@ -72,7 +76,7 @@ class ClaraOrchestrator:
         
         # Store in memory
         self.memory.store_conversation(
-            user_message=message,
+            user_message=message.replace("[Respond concisely for voice - max 2-3 sentences] ", ""),
             joi_response=response,  # Keep DB field name for compatibility
             backend=backend,
             model=model
@@ -84,7 +88,34 @@ class ClaraOrchestrator:
             'model': model
         }
     
-    def smart_routing(self, message: str) -> Dict:
+    def generate_voice_summary(self, full_response: str, original_query: str) -> str:
+        """Generate a concise voice-appropriate version of the response"""
+        
+        # Use local model for quick summarization
+        summary_prompt = f"""
+        Original question: {original_query}
+        
+        Full response: {full_response}
+        
+        Create a 1-2 sentence spoken response that:
+        - Captures the key point
+        - Sounds natural when spoken aloud
+        - Uses conversational language
+        - Ends with a natural pause point
+        
+        Remember: You are Clara, direct and clear.
+        """
+        
+        try:
+            # Use local model for speed
+            summary = self.ollama.chat(summary_prompt)
+            return summary
+        except:
+            # Fallback: take first two sentences
+            sentences = full_response.split('. ')[:2]
+            return '. '.join(sentences) + '.'
+    
+    def smart_routing(self, message: str, voice_mode: bool = False) -> Dict:
         """Intelligently route to best backend based on query complexity"""
         
         # Keywords that suggest need for frontier model
@@ -103,16 +134,52 @@ class ClaraOrchestrator:
             needs_frontier = True
         
         # Try Claude first, then Gemini, then local
-        if needs_frontier:
+        if needs_frontier and not voice_mode:  # Don't use expensive models for voice summaries
             if self.claude.is_available():
                 logger.info("Routing to Claude for complex query")
-                return self.chat(message, use_claude=True)
+                return self.chat(message, use_claude=True, voice_mode=voice_mode)
             elif self.gemini.is_available():
                 logger.info("Routing to Gemini as Claude unavailable")
-                return self.chat(message, use_gemini=True)
+                return self.chat(message, use_gemini=True, voice_mode=voice_mode)
         
         # Default to local
-        return self.chat(message)
+        return self.chat(message, voice_mode=voice_mode)
+    
+    def voice_chat(self, use_voice_input: bool = True, use_voice_output: bool = True) -> Dict:
+        """Handle voice-based interaction with concise responses"""
+        result = {'status': 'error', 'message': 'Voice not available'}
+        
+        # Listen for input
+        if use_voice_input:
+            logger.info("Listening for voice input...")
+            text = self.voice.listen(timeout=10)
+            if not text:
+                return {'status': 'error', 'message': 'No speech detected'}
+        else:
+            return {'status': 'error', 'message': 'Voice input not requested'}
+        
+        # Process through chat - get BOTH full and voice responses
+        chat_result = self.smart_routing(text, voice_mode=False)  # Get full response first
+        full_response = chat_result['response']
+        
+        # Generate concise voice version
+        voice_response = self.generate_voice_summary(full_response, text)
+        
+        # Speak the concise version
+        if use_voice_output:
+            success = self.voice.speak(voice_response)
+            if not success:
+                logger.warning("TTS failed")
+        
+        return {
+            'status': 'success',
+            'input': text,
+            'response': full_response,  # Full response for text display
+            'voice_response': voice_response,  # What was actually spoken
+            'backend': chat_result['backend'],
+            'model': chat_result['model'],
+            'voice_output': use_voice_output
+        }
     
     def get_relevant_context(self, message: str) -> List[Dict]:
         """Get relevant context from memory"""
@@ -135,37 +202,6 @@ class ClaraOrchestrator:
                     context.insert(1, {'role': 'assistant', 'content': mem['joi_response']})
         
         return context[-20:]  # Limit context to last 20 messages
-    
-    def voice_chat(self, use_voice_input: bool = True, use_voice_output: bool = True) -> Dict:
-        """Handle voice-based interaction"""
-        result = {'status': 'error', 'message': 'Voice not available'}
-        
-        # Listen for input
-        if use_voice_input:
-            logger.info("Listening for voice input...")
-            text = self.voice.listen(timeout=10)
-            if not text:
-                return {'status': 'error', 'message': 'No speech detected'}
-        else:
-            return {'status': 'error', 'message': 'Voice input not requested'}
-        
-        # Process through chat
-        chat_result = self.smart_routing(text)
-        
-        # Speak response
-        if use_voice_output:
-            success = self.voice.speak(chat_result['response'])
-            if not success:
-                logger.warning("TTS failed")
-        
-        return {
-            'status': 'success',
-            'input': text,
-            'response': chat_result['response'],
-            'backend': chat_result['backend'],
-            'model': chat_result['model'],
-            'voice_output': use_voice_output
-        }
     
     def get_status(self) -> Dict:
         """Get status of all components"""

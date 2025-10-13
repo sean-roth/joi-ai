@@ -36,6 +36,7 @@ def chat():
         message = data.get('message')
         use_claude = data.get('use_claude', False)
         use_gemini = data.get('use_gemini', False)
+        voice_mode = data.get('voice_mode', False)  # Flag for concise responses
         
         if not message:
             return jsonify({
@@ -45,11 +46,11 @@ def chat():
         
         # Route based on backend preference
         if use_claude:
-            result = clara.chat(message, use_claude=True)
+            result = clara.chat(message, use_claude=True, voice_mode=voice_mode)
         elif use_gemini:
-            result = clara.chat(message, use_gemini=True)
+            result = clara.chat(message, use_gemini=True, voice_mode=voice_mode)
         else:
-            result = clara.smart_routing(message)  # Smart routing based on complexity
+            result = clara.smart_routing(message, voice_mode=voice_mode)
         
         return jsonify({
             'status': 'success',
@@ -67,7 +68,7 @@ def chat():
 
 @app.route('/api/voice', methods=['POST'])
 def voice_chat():
-    """Handle voice interactions"""
+    """Handle voice interactions with proper conversational flow"""
     try:
         result = clara.voice_chat(use_voice_input=True, use_voice_output=True)
         return jsonify(result)
@@ -80,10 +81,11 @@ def voice_chat():
 
 @app.route('/api/speak', methods=['POST'])
 def speak():
-    """Text-to-speech only"""
+    """Text-to-speech with optional summarization"""
     try:
         data = request.json
         text = data.get('text')
+        summarize = data.get('summarize', False)  # Should we create a concise version?
         
         if not text:
             return jsonify({
@@ -91,10 +93,18 @@ def speak():
                 'message': 'No text provided'
             }), 400
         
-        success = clara.voice.speak(text)
+        # If summarize is true, generate concise version
+        if summarize and len(text) > 100:
+            spoken_text = clara.generate_voice_summary(text, "User requested TTS")
+        else:
+            spoken_text = text
+        
+        success = clara.voice.speak(spoken_text)
         return jsonify({
             'status': 'success' if success else 'error',
-            'spoken': success
+            'original': text,
+            'spoken': spoken_text,
+            'success': success
         })
     except Exception as e:
         logger.error(f"TTS error: {e}")
