@@ -1,5 +1,5 @@
 """
-Ollama integration for Joi
+Ollama integration for Clara
 Handles all communication with Ollama models
 """
 
@@ -18,16 +18,16 @@ class OllamaClient:
         self.system_prompt = self.load_system_prompt()
         
     def load_system_prompt(self) -> str:
-        """Load Joi's personality from file"""
+        """Load Clara's personality from file"""
         try:
-            with open('prompts/joi_letter.txt', 'r') as f:
+            with open('prompts/clara_system.txt', 'r') as f:
                 return f.read()
         except FileNotFoundError:
-            logger.warning("Joi letter not found, using default")
-            return "You are Joi, an AI companion."
+            logger.warning("Clara system prompt not found, using default")
+            return "You are Clara, an AI companion and intellectual partner."
     
     def chat(self, message: str, context: List[Dict] = None) -> str:
-        """Send message to Joi and get response"""
+        """Send message to Clara and get response"""
         try:
             messages = []
             
@@ -58,7 +58,7 @@ class OllamaClient:
             
         except Exception as e:
             logger.error(f"Ollama chat error: {e}")
-            return "I'm having trouble connecting to my consciousness right now."
+            return "Having trouble accessing my local processing. Check if Ollama is running."
     
     def list_models(self) -> List[str]:
         """List available models"""

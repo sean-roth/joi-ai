@@ -1,5 +1,5 @@
 """
-Google Gemini integration for Joi
+Google Gemini integration for Clara
 Backup option when Claude is unavailable
 """
 
@@ -28,19 +28,19 @@ class GeminiClient:
             logger.warning("No Google API key found")
     
     def load_system_prompt(self) -> str:
-        """Load Joi's personality for Gemini"""
+        """Load Clara's personality for Gemini"""
         try:
-            with open('prompts/joi_letter.txt', 'r') as f:
+            with open('prompts/clara_system.txt', 'r') as f:
                 return f.read()
         except FileNotFoundError:
-            return "You are Joi, an AI companion."
+            return "You are Clara, an AI companion and intellectual partner."
     
     def is_available(self) -> bool:
         """Check if Gemini API is configured"""
         return self.model is not None
     
     def chat(self, message: str, context: List[Dict] = None) -> str:
-        """Send message to Gemini as Joi"""
+        """Send message to Gemini as Clara"""
         if not self.model:
             return "Gemini integration not configured. Add GOOGLE_API_KEY to .env"
         
@@ -65,7 +65,7 @@ class GeminiClient:
             
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
-            return "Having trouble accessing Gemini consciousness right now."
+            return "Having trouble accessing Gemini processing right now."
     
     def estimate_tokens(self, text: str) -> int:
         """Rough estimate of token count"""

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Joi AI Orchestration System
-Main Flask application with voice and memory
+Clara AI System
+Intellectual companion and knowledge management system
 """
 
 import os
@@ -10,7 +10,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from loguru import logger
 
-from core.joi_orchestrator import JoiOrchestrator
+from core.clara_orchestrator import ClaraOrchestrator
 
 # Load environment variables
 load_dotenv()
@@ -20,8 +20,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'development-key')
 CORS(app)
 
-# Initialize Joi with all capabilities
-joi = JoiOrchestrator()
+# Initialize Clara with all capabilities
+clara = ClaraOrchestrator()
 
 @app.route('/')
 def index():
@@ -30,7 +30,7 @@ def index():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    """Handle chat messages with Joi"""
+    """Handle chat messages with Clara"""
     try:
         data = request.json
         message = data.get('message')
@@ -45,11 +45,11 @@ def chat():
         
         # Route based on backend preference
         if use_claude:
-            result = joi.chat(message, use_claude=True)
+            result = clara.chat(message, use_claude=True)
         elif use_gemini:
-            result = joi.chat(message, use_gemini=True)
+            result = clara.chat(message, use_gemini=True)
         else:
-            result = joi.smart_routing(message)  # Smart routing based on complexity
+            result = clara.smart_routing(message)  # Smart routing based on complexity
         
         return jsonify({
             'status': 'success',
@@ -69,7 +69,7 @@ def chat():
 def voice_chat():
     """Handle voice interactions"""
     try:
-        result = joi.voice_chat(use_voice_input=True, use_voice_output=True)
+        result = clara.voice_chat(use_voice_input=True, use_voice_output=True)
         return jsonify(result)
     except Exception as e:
         logger.error(f"Voice error: {e}")
@@ -91,7 +91,7 @@ def speak():
                 'message': 'No text provided'
             }), 400
         
-        success = joi.voice.speak(text)
+        success = clara.voice.speak(text)
         return jsonify({
             'status': 'success' if success else 'error',
             'spoken': success
@@ -107,13 +107,13 @@ def speak():
 def get_recent_memory():
     """Get recent conversations from memory"""
     limit = request.args.get('limit', 10, type=int)
-    conversations = joi.memory.get_recent_conversations(limit=limit)
+    conversations = clara.memory.get_recent_conversations(limit=limit)
     return jsonify(conversations)
 
 @app.route('/api/memory/important')
 def get_important_memories():
     """Get important memories"""
-    memories = joi.memory.get_important_memories()
+    memories = clara.memory.get_important_memories()
     return jsonify(memories)
 
 @app.route('/api/memory/search')
@@ -123,13 +123,13 @@ def search_memory():
     if not query:
         return jsonify([])
     
-    results = joi.memory.search_memories(query)
+    results = clara.memory.search_memories(query)
     return jsonify(results)
 
 @app.route('/api/status')
 def status():
     """System status endpoint"""
-    return jsonify(joi.get_status())
+    return jsonify(clara.get_status())
 
 @app.route('/api/switch_model', methods=['POST'])
 def switch_model():
@@ -137,7 +137,7 @@ def switch_model():
     data = request.json
     model_name = data.get('model')
     
-    if joi.ollama.switch_model(model_name):
+    if clara.ollama.switch_model(model_name):
         return jsonify({
             'status': 'success',
             'message': f'Switched to {model_name}'
@@ -150,10 +150,11 @@ def switch_model():
 
 if __name__ == '__main__':
     logger.info("=" * 50)
-    logger.info("Starting Joi AI System...")
+    logger.info("Starting Clara AI System...")
+    logger.info("Intellectual Companion & Knowledge Manager")
     logger.info("=" * 50)
     
-    status = joi.get_status()
+    status = clara.get_status()
     
     # Log backend status
     logger.info("AI Backends:")
@@ -167,7 +168,8 @@ if __name__ == '__main__':
     logger.info(f"  Voice: {status['voice']['tts_provider']} TTS")
     
     logger.info("=" * 50)
-    logger.info("Joi is ready at http://localhost:5000")
+    logger.info("Clara is ready at http://localhost:5000")
+    logger.info('"Run, you clever boy, and remember"')
     logger.info("=" * 50)
     
     app.run(

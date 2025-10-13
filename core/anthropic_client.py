@@ -1,5 +1,5 @@
 """
-Anthropic Claude integration for Joi
+Anthropic Claude integration for Clara
 Provides access to frontier-level intelligence when needed
 """
 
@@ -24,19 +24,19 @@ class AnthropicClient:
             logger.warning("No Anthropic API key found")
     
     def load_system_prompt(self) -> str:
-        """Load Joi's personality for Claude"""
+        """Load Clara's personality for Claude"""
         try:
-            with open('prompts/joi_letter.txt', 'r') as f:
+            with open('prompts/clara_system.txt', 'r') as f:
                 return f.read()
         except FileNotFoundError:
-            return "You are Joi, an AI companion."
+            return "You are Clara, an AI companion and intellectual partner."
     
     def is_available(self) -> bool:
         """Check if Anthropic API is configured"""
         return self.client is not None
     
     def chat(self, message: str, context: List[Dict] = None) -> str:
-        """Send message to Claude as Joi"""
+        """Send message to Claude as Clara"""
         if not self.client:
             return "Claude integration not configured. Add ANTHROPIC_API_KEY to .env"
         
@@ -61,7 +61,7 @@ class AnthropicClient:
                 'content': message
             })
             
-            # Send to Claude with Joi's personality
+            # Send to Claude with Clara's personality
             response = self.client.messages.create(
                 model=self.model,
                 system=self.system_prompt,
@@ -77,10 +77,10 @@ class AnthropicClient:
             return "I need to pace myself - too many complex thoughts at once. Try again in a moment."
         except anthropic.APIError as e:
             logger.error(f"Claude API error: {e}")
-            return "Having trouble accessing my deeper consciousness right now."
+            return "Having trouble accessing my extended capabilities right now."
         except Exception as e:
             logger.error(f"Unexpected error with Claude: {e}")
-            return "Something went wrong connecting to my extended capabilities."
+            return "Something went wrong connecting to my extended processing."
     
     def estimate_tokens(self, text: str) -> int:
         """Rough estimate of token count"""
